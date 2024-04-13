@@ -1,0 +1,150 @@
+\begin{zed}
+    [USER, TIMESTAMP] \\
+    RES ::= ok \\
+          | userAlreadyExists \\
+          | userDoesNotExist \\
+          | userDoesNotHaveAccess \\
+          | timestampAlreadyExists \\
+\end{zed}
+
+\begin{schema}{State}
+    users: \power USER \\
+    access: TIMESTAMP \pfun USER
+\end{schema}
+
+\begin{schema}{InvState}
+    State
+    \where
+    \ran access \subseteq users
+\end{schema}
+
+\begin{schema}{InitialState}
+    State
+    \where
+    users = \emptyset \\
+    access = \emptyset
+\end{schema}
+
+\begin{schema}{AddUserOk}
+    \Delta State \\
+    u?: USER \\
+    res!: RES
+    \where
+    u? \notin users \\
+    users' = users \cup \{u?\} \\
+    access' = access \\
+    res! = ok
+\end{schema}
+
+\begin{schema}{AddUserAlreadyExists}
+    \Xi State \\
+    u?: USER \\
+    res!: RES
+    \where
+    u? \in users \\
+    res! = userAlreadyExists
+\end{schema}
+
+\begin{zed}
+    AddUser \defs AddUserOk \lor AddUserAlreadyExists
+\end{zed}
+
+\begin{schema}{RemoveUserOk}
+    \Delta State \\
+    u?: USER \\
+    res!: RES
+    \where
+    u? \in users \\
+    users' = users \setminus \{u?\} \\
+    access' = access \nrres \{u?\} \\
+    res! = ok
+\end{schema}
+
+\begin{schema}{RemoveUserDoesNotExist}
+    \Xi State \\
+    u?: USER \\
+    res!: RES
+    \where
+    u? \notin users \\
+    res! = userDoesNotExist
+\end{schema}
+
+\begin{zed}
+    RemoveUser \defs RemoveUserOk \lor RemoveUserDoesNotExist
+\end{zed}
+
+\begin{schema}{ValidateAccessOk}
+    \Delta State \\
+    u?: USER \\
+    t?: TIMESTAMP \\
+    res!: RES
+    \where
+    u? \in users \\
+    t? \notin \dom access \\
+    users' = users \\
+    access' = access \cup \{t? \mapsto u?\} \\
+    res! = ok
+\end{schema}
+
+\begin{schema}{VAUserDoesNotHaveAccess}
+    \Xi State \\
+    u?: USER \\
+    t?: TIMESTAMP \\
+    res!: RES
+    \where
+    u? \notin users \\
+    res! = userDoesNotHaveAccess
+\end{schema}
+
+\begin{schema}{VATimestampAlreadyExists}
+    \Xi State \\
+    u?: USER \\
+    t?: TIMESTAMP \\
+    res!: RES
+    \where
+    u? \in users \\
+    t? \in \dom access \\
+    res! = timestampAlreadyExists
+\end{schema}
+
+\begin{zed}
+    ValidateAccessError \defs VAUserDoesNotHaveAccess \lor VATimestampAlreadyExists \\
+    ValidateAccess \defs ValidateAccessOk \lor ValidateAccessError
+\end{zed}
+
+\begin{theorem}{ValidateAccessInv}
+    InvState \land ValidateAccess \implies InvState'
+\end{theorem}
+
+\begin{zproof}
+    invoke ValidateAccess;
+    invoke ValidateAccessError;
+    split ValidateAccessOk;
+    cases;
+    reduce;
+    prove by rewrite;
+    next;
+    reduce;
+    disjunctive;
+    prove by rewrite;
+    next;
+\end{zproof}
+
+\begin{schema}{State}
+    users: \power USER \\
+    access: TIMESTAMP \rel USER
+\end{schema}
+
+\begin{schema}{InvState}
+    State
+    \where
+    \dom access \subseteq users \\
+    access \in TIMESTAMP \pfun USER
+\end{schema}
+
+\begin{schema}{InitialState}
+    State
+    \where
+    users = \emptyset \\
+    access = \emptyset
+\end{schema}
