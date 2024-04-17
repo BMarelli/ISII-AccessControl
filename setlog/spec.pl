@@ -12,6 +12,16 @@ invState(Users, Access) :-
     ran(Access, X) &
     subset(X, Users).
 
+dec_p_type(n_invState(users, access)).
+n_invState(Users, Access) :-
+    dec(X, set(user)) &
+    ran(Access, X) &
+    neg(
+        set(Users) &
+        pfun(Access) &
+        subset(X, Users)
+    ).
+
 initial(initialState).
 dec_p_type(initialState(users, access)).
 initialState(Users, Access) :-
